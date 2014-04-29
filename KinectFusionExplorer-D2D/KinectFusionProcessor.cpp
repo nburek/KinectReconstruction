@@ -2904,8 +2904,8 @@ HRESULT KinectFusionProcessor::GetScreenshotFileName(wchar_t *screenshotName, UI
 		wchar_t timeString[MAX_PATH];
 		GetTimeFormatEx(NULL, 0, NULL, L"hh'-'mm'-'ss", timeString, _countof(timeString));
 
-		// File name will be KinectSnapshot-HH-MM-SS.wav
-		StringCchPrintfW(screenshotName, screenshotNameSize, L"%s\\KinectSnapshot-%s%d.bmp", knownPath, timeString, fileSuffix);
+		
+		StringCchPrintfW(screenshotName, screenshotNameSize, L"%s\\%06d.bmp", knownPath, fileSuffix);
 		fileSuffix++;
 	}
 
