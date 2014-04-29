@@ -44,47 +44,95 @@ void bulkSIFTMatching(){
 }
 
 //a bit more complicated, but technically faster than performing a sort and picking top 5
-void pickTopFive(vector<vector< DMatch >>* matchVec, int matchIndices[5]){
-	int amounts[5];
+void pickTopFive(vector<vector< DMatch >>* matchVec, vector<int>* matchIndices){
+	vector<int>* amounts = new vector<int>();
+	for (int i = 0; i < 5; i++){
+		amounts->push_back(0);
+	}
+	
 
-	for (int i = 1; i < matchVec->size(); i++){
+	for (int i = 0; i < matchVec->size(); i++){
 		int matchCounts = (*matchVec)[i].size();
 			
-		if (matchCounts > amounts[0]){
-			matchIndices[0] = i;
-			amounts[0] = matchCounts;
+		if (matchCounts > (*amounts)[0]){
+			matchIndices->insert(matchIndices->begin(), i);
+			amounts->insert(amounts->begin(), matchCounts);
 		}
-		else if (matchCounts > amounts[1]){
-			matchIndices[1] = i;
-			amounts[1] = matchCounts;
+		else if (matchCounts > (*amounts)[1]){
+			matchIndices->insert(matchIndices->begin()+1, i);
+			amounts->insert(amounts->begin()+1, matchCounts);
 		}
-		else if (matchCounts > amounts[2]){
-			matchIndices[2] = i;
-			amounts[2] = matchCounts;
+		else if (matchCounts > (*amounts)[2]){
+			matchIndices->insert(matchIndices->begin() + 2, i);
+			amounts->insert(amounts->begin() + 2, matchCounts);
 		}
-		else if (matchCounts > amounts[3]){
-			matchIndices[3] = i;
-			amounts[3] = matchCounts;
+		else if (matchCounts > (*amounts)[3]){
+			matchIndices->insert(matchIndices->begin() + 3, i);
+			amounts->insert(amounts->begin() + 3, matchCounts);
 		}
-		else if (matchCounts > amounts[4]){
-			matchIndices[4] = i;
-			amounts[4] = matchCounts;
+		else if (matchCounts > (*amounts)[4]){
+			matchIndices->insert(matchIndices->begin() + 4, i);
+			amounts->insert(amounts->begin() + 4, matchCounts);
 		}
 		
 	}
+	matchIndices->resize(5);
+
 }
 
-void findTopFiveMatches(Mat hqDesc, vector<Mat>* keyframeDesc, int matchIndices[5]){
+void findTopFiveFLANNMatches(Mat hqDesc, vector<Mat>* keyframeDesc, vector<vector< DMatch >>* matchVec, vector<int>* matchIndices){
 	FlannBasedMatcher matcher;
 	int index = 0;
 
-	vector<vector< DMatch >>* matchVec = new vector<vector< DMatch >>();
 	//Calculate matches between high quality image and 
 	for (vector<Mat>::iterator it = keyframeDesc->begin(); it != keyframeDesc->end(); ++it){
 		vector< DMatch > matches;
 
+		//calculate initial matches
 		Mat kfDesc = *it;
-		matcher.match(kfDesc, hqDesc, matches);
+		matcher.match(hqDesc, kfDesc, matches);
+
+		//determine good matches
+		double max_dist = 0; double min_dist = 100;
+
+		//-- Quick calculation of max and min distances between keypoints
+		for (int i = 0; i < hqDesc.rows; i++)
+		{
+			double dist = matches[i].distance;
+			if (dist < min_dist) min_dist = dist;
+			if (dist > max_dist) max_dist = dist;
+		}
+
+		std::vector< DMatch > good_matches;
+		for (int i = 0; i < hqDesc.rows; i++)
+		{
+			if (matches[i].distance <= max(2 * min_dist, 0.02))
+			{
+				good_matches.push_back(matches[i]);
+			}
+		}
+
+
+		matchVec->push_back(good_matches);
+		index++;
+	}
+	//pickTopFive
+	pickTopFive(matchVec, matchIndices);
+	index = 0;
+}
+
+void findTopFiveBFMatches(Mat hqDesc, vector<Mat>* keyframeDesc, vector<vector< DMatch >>* matchVec, vector<int>* matchIndices){
+	BFMatcher matcher;
+	int index = 0;
+
+	//Calculate matches between high quality image and 
+	for (vector<Mat>::iterator it = keyframeDesc->begin(); it != keyframeDesc->end(); ++it){
+		vector< DMatch > matches;
+
+		//calculate initial matches
+		Mat kfDesc = *it;
+		matcher.match(hqDesc, kfDesc, matches);
+
 		matchVec->push_back(matches);
 		index++;
 	}
@@ -157,8 +205,39 @@ int main(){
 		2. Brute Force
 	*/
 	
-	int matchIndices[5] = { 0, 0, 0, 0, 0 };
-	//findTopFiveMatches(hqPictures->front(), keyframeDescriptors, matchIndices);
+	//int matchIndices[5] = { 0, 0, 0, 0, 0 };
+	vector<int>* matchIndices = new vector<int>();
+	vector<vector< DMatch >>* matchVec = new vector<vector< DMatch >>();
+	findTopFiveFLANNMatches(hqPicDescriptors->front(), keyframeDescriptors, matchVec, matchIndices);
+	//findTopFiveBFMatches(hqPicDescriptors->front(), keyframeDescriptors, matchVec, matchIndices);
+
+/*	
+	namedWindow("Top Result", WINDOW_AUTOSIZE);// Create a window for display.
+	imshow("Top Result", (*keyframes)[matchIndices->front()]);                   // Show our image inside it.
+	namedWindow("High Quality image", WINDOW_AUTOSIZE);// Create a window for display.
+	imshow("High Quality image", hqPicDescriptors->front());                   // Show our image inside it.
+	*/
+
+	Mat img_matches;
+	Mat img1 = hqPictures->front();
+	Mat img2 = (*keyframes)[*(matchIndices->begin()+1)];	//true match
+	vector<KeyPoint> keypoints1 = hqPicFeatures->front();
+	vector<KeyPoint> keypoints2 = (*keyframeFeatures)[*(matchIndices->begin() + 1)];
+	vector<DMatch> matches = (*matchVec)[*(matchIndices->begin() + 1)];
+
+	//BF Matcher
+	//drawMatches(img1, keypoints1, img2, keypoints1, matches, img_matches);
+
+	//FLANN Matcher
+	drawMatches(img1, keypoints1, img2, keypoints2, matches, img_matches, Scalar::all(-1), Scalar::all(-1),	vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+
+	//-- Show detected matches
+	imshow("Good Matches", img_matches);
+
+	//-- Show detected matches
+	//imshow("Matches", img_matches);
+
+	waitKey(0);
 
 	
 	//Example Code: http://fahmifahim.com/2012/12/11/opencv-sift-implementation-in-opencv-2-4/
@@ -179,7 +258,7 @@ int main(){
 	waitKey(0);
 	*/
 	//-- Show detected matches
-	imshow("Matches", img_matches);
+	//imshow("Matches", img_matches);
 
 
 	//Determine good matches
