@@ -1,6 +1,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <dirent.h>
 
@@ -146,9 +148,9 @@ int main(){
 	vector<Mat>* hqPictures = new vector<Mat>();
 
 	//load keyframes
-	loadPhotos(keyframes, "C:\\Pictures\\keyframes\\");
+	loadPhotos(keyframes, "C:\\Users\\Nick\\Pictures\\\FinalKeyframes\\");
 	//load hqpictures
-	loadPhotos(hqPictures, "C:\\Pictures\\hqpictures\\");
+	loadPhotos(hqPictures, "C:\\Users\\Nick\\Pictures\\HiResTest\\");
 
 	//Perform SIFT on all images
 	double threshold      = 0.05;
@@ -225,14 +227,67 @@ int main(){
 	vector<KeyPoint> keypoints2 = (*keyframeFeatures)[*(matchIndices->begin() + 1)];
 	vector<DMatch> matches = (*matchVec)[*(matchIndices->begin() + 1)];
 
+
+
+	/* Find Homography of best match */
+	Mat descriptors_object = (*keyframeDescriptors)[*(matchIndices->begin() + 1)];
+	Mat descriptors_scene = hqPicDescriptors->front();
+	//FlannBasedMatcher matcher;
+	//std::vector< DMatch > matches;
+	//matcher.match(descriptors_object, descriptors_scene, matches);
+
+
+	double max_dist = 0; double min_dist = 100;
+
+	//-- Quick calculation of max and min distances between keypoints
+	for (int i = 0; i < matches.size(); i++)
+	{
+		double dist = matches[i].distance;
+		if (dist < min_dist) min_dist = dist;
+		if (dist > max_dist) max_dist = dist;
+	}
+
+	printf("-- Max dist : %f \n", max_dist);
+	printf("-- Min dist : %f \n", min_dist);
+
+	//-- Draw only "good" matches (i.e. whose distance is less than 3*min_dist )
+	std::vector< DMatch > good_matches;
+
+	for (int i = 0; i < matches.size(); i++)
+	{
+		if (matches[i].distance < 3 * min_dist)
+		{
+			good_matches.push_back(matches[i]);
+		}
+	}
+
+	//-- Localize the object
+	std::vector<Point2f> obj;
+	std::vector<Point2f> scene;
+
+	for (int i = 0; i < good_matches.size(); i++)
+	{
+		//-- Get the keypoints from the good matches
+		obj.push_back(keypoints1[good_matches[i].queryIdx].pt);
+		scene.push_back(keypoints2[good_matches[i].trainIdx].pt);
+	}
+
+	Mat H = findHomography(scene, obj, CV_RANSAC);
+	cout << "Homography: " << H;
+
+
 	//BF Matcher
 	//drawMatches(img1, keypoints1, img2, keypoints1, matches, img_matches);
 
 	//FLANN Matcher
-	drawMatches(img1, keypoints1, img2, keypoints2, matches, img_matches, Scalar::all(-1), Scalar::all(-1),	vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+	drawMatches(img1, keypoints1, img2, keypoints2, good_matches, img_matches, Scalar::all(-1), Scalar::all(-1), vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
 	//-- Show detected matches
 	imshow("Good Matches", img_matches);
+
+	Mat transformedImg;
+	warpPerspective(img1, transformedImg, H, Size(2064,1161));
+	imwrite("C:\\Users\\Nick\\Pictures\\HiResTrans.jpg", transformedImg);
 
 	//-- Show detected matches
 	//imshow("Matches", img_matches);

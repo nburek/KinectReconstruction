@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 
 	string fileRoot = "C:\\Users\\Nick\\Pictures";
 	string pictureFolder = fileRoot + "\\FusionPictures\\";
+	string outPictureFolder = fileRoot + "\\FlippedPictures\\";
 	string outputFile = "video.avi";
 
 	//load pictures from folder
@@ -62,6 +63,7 @@ int main(int argc, char *argv[])
 	{
 		Mat flippedPhoto;
 		flip((*photos)[i], flippedPhoto, 1);
+		imwrite(outPictureFolder + (*fileNames)[i], flippedPhoto);
 		outputVideo << flippedPhoto;
 	}
 }
