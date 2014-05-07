@@ -47,7 +47,7 @@ void bulkSIFTMatching(){
 
 //a bit more complicated, but technically faster than performing a sort and picking top 5
 void pickTopFive(vector<vector< DMatch >>* matchVec, vector<int>* matchIndices){
-	vector<int>* amounts = new vector<int>();
+ 	vector<int>* amounts = new vector<int>();
 	for (int i = 0; i < 5; i++){
 		amounts->push_back(0);
 	}
@@ -207,22 +207,15 @@ int main(){
 		2. Brute Force
 	*/
 	
-	//int matchIndices[5] = { 0, 0, 0, 0, 0 };
 	vector<int>* matchIndices = new vector<int>();
 	vector<vector< DMatch >>* matchVec = new vector<vector< DMatch >>();
 	findTopFiveFLANNMatches(hqPicDescriptors->front(), keyframeDescriptors, matchVec, matchIndices);
 	//findTopFiveBFMatches(hqPicDescriptors->front(), keyframeDescriptors, matchVec, matchIndices);
 
-/*	
-	namedWindow("Top Result", WINDOW_AUTOSIZE);// Create a window for display.
-	imshow("Top Result", (*keyframes)[matchIndices->front()]);                   // Show our image inside it.
-	namedWindow("High Quality image", WINDOW_AUTOSIZE);// Create a window for display.
-	imshow("High Quality image", hqPicDescriptors->front());                   // Show our image inside it.
-	*/
-
 	Mat img_matches;
 	Mat img1 = hqPictures->front();
-	Mat img2 = (*keyframes)[*(matchIndices->begin()+1)];	//true match
+	//Note: compensating for current dataset: will probably want to remove the +1
+	Mat img2 = (*keyframes)[*(matchIndices->begin()+1)];
 	vector<KeyPoint> keypoints1 = hqPicFeatures->front();
 	vector<KeyPoint> keypoints2 = (*keyframeFeatures)[*(matchIndices->begin() + 1)];
 	vector<DMatch> matches = (*matchVec)[*(matchIndices->begin() + 1)];
@@ -289,107 +282,10 @@ int main(){
 	warpPerspective(img1, transformedImg, H, Size(2064,1161));
 	imwrite("C:\\Users\\Nick\\Pictures\\HiResTrans.jpg", transformedImg);
 
-	//-- Show detected matches
-	//imshow("Matches", img_matches);
 
 	waitKey(0);
 
 	
-	//Example Code: http://fahmifahim.com/2012/12/11/opencv-sift-implementation-in-opencv-2-4/
-	/*FlannBasedMatcher matcher;
-	vector<vector< DMatch >>* matchVec = new vector<vector< DMatch >>();
-	index = 0;
-	for (vector<Mat>::iterator it = keyframeDescriptors->begin(); it != keyframeDescriptors->end(); ++it){
-		vector< DMatch > matches;
-		matcher.match(*it, (*hqPicDescriptors)[index], matches);
-		matchVec->push_back(matches);
-		index++;
-	}
 
-	Mat img_matches;
-	drawMatches(keyframes->front(), keyframeDescriptors->front(), hqPictures->front(), hqPicDescriptors->front(), matchVec->front(), img_matches);
-	imshow("Matches", img_matches);
-
-	waitKey(0);
-	*/
-	//-- Show detected matches
-	//imshow("Matches", img_matches);
-
-
-	//Determine good matches
-
-	/*
-	double max_dist = 0; double min_dist = 100;
-	Mat descriptors = keyframeDescriptors->front();
-	vector<Point2d*>* minMaxDistances = new vector<Point2d*>();
-
-	index = 0;
-	//-- Quick calculation of max and min distances between keypoints
-	for (vector<vector< DMatch >>::iterator it = matchVec->begin(); it != matchVec->end(); ++it)
-	{
-		Mat descriptors = (*keyframeDescriptors)[index];	//probably not needed
-		vector< DMatch > matches = matchVec->front();
-
-		for (int i = 0; i < matches.size(); i++)
-		{
-			double dist = matches[i].distance;
-			if (dist < min_dist) min_dist = dist;
-			if (dist > max_dist) max_dist = dist;
-		}
-
-		Point2d* minMaxDist = new Point2d(min_dist, max_dist);
-		minMaxDistances->push_back(minMaxDist);
-
-		printf("-- Max dist : %f \n", max_dist);
-		printf("-- Min dist : %f \n", min_dist);
-	}
-	
-	//-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
-	//-- or a small arbitary value ( 0.02 ) in the event that min_dist is very
-	//-- small)
-	//-- PS.- radiusMatch can also be used here.
-	vector<vector< DMatch >>* betterMatches = new vector<vector< DMatch >>();
-	for (vector<vector< DMatch >>::iterator it = matchVec->begin(); it != matchVec->end(); ++it)
-	{
-		vector< DMatch > good_matches;
-		vector< DMatch > matches = *it;
-
-		for (int i = 0; i < matchVec->size(); i++)
-		{
-			if (matches[i].distance <= max(2 * min_dist, 0.02))
-			{
-				good_matches.push_back(matches[i]);
-			}
-		}
-		betterMatches->push_back(good_matches);
-	}*/
-
-	//-- Draw only "good" matches
-	/*Mat img_matches;
-	drawMatches(img_1, keypoints_1, img_2, keypoints_2,
-		good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
-		vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-
-	//-- Show detected matches
-	imshow("Good Matches", img_matches);
-
-	for (int i = 0; i < (int)good_matches.size(); i++)
-	{
-		printf("-- Good Match [%d] Keypoint 1: %d  -- Keypoint 2: %d  \n", i, good_matches[i].queryIdx, good_matches[i].trainIdx);
-	}
-
-	waitKey(0);
-	*/
-
-
-	// Store description to "descriptors.des".
-	/*FileStorage fs;
-	fs.open("descriptors.des", FileStorage::WRITE);
-	cout << "Opened file to store the features." << endl;
-	fs << "descriptors" << descriptors;
-	cout << "Finished writing file." << endl;
-	fs.release();
-	cout << "Released file." << endl;
-	*/
 	return 0;
 }
