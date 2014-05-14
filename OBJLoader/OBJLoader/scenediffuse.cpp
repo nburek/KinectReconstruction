@@ -35,9 +35,9 @@ void SceneDiffuse::initScene()
 
 	cout << "Loading Camera Matrix" << endl;
 	glm::mat4 camMatrix;
-	loadCameraMatrices("cameraMatrix.txt", 1, camMatrix);
+	loadCameraMatrices("cameraMatrix.txt", 100, camMatrix);
 	view = camMatrix;
-
+	
 	cout << "Loading Mesh" << endl;
 
 	//ogre = new VBOMesh("../media/bs_ears.obj", true, false, false);
@@ -45,8 +45,6 @@ void SceneDiffuse::initScene()
 	//torus = new VBOTorus(0.7f, 0.3f, 30, 30);
 
 	model = mat4(1.0f);
-	model *= glm::rotate(-35.0f, vec3(1.0f, 0.0f, 0.0f));
-	model *= glm::rotate(35.0f, vec3(0.0f, 1.0f, 0.0f));
 	//view = glm::lookAt(vec3(0.0f, 0.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 	
 	projection = mat4(1.0f);
