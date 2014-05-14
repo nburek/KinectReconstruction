@@ -26,6 +26,8 @@ private:
 
 	void setMatrices();
 	void compileAndLinkShader();
+	void loadCameraMatrices(const char * fileName, int matIndex, glm::mat4 &camMatrix);
+	void trimString(string & str);
 
 public:
 	SceneDiffuse();
