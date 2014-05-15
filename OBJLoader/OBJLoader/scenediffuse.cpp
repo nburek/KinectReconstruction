@@ -24,6 +24,7 @@ using glm::vec3;
 
 SceneDiffuse::SceneDiffuse()
 {
+	loadCamMatFlag = false;
 }
 
 void SceneDiffuse::initScene()
@@ -33,11 +34,19 @@ void SceneDiffuse::initScene()
 
 	glEnable(GL_DEPTH_TEST);
 
-	cout << "Loading Camera Matrix" << endl;
-	glm::mat4 camMatrix;
-	loadCameraMatrices("cameraMatrix.txt", 100, camMatrix);
-	view = camMatrix;
-	
+	if (loadCamMatFlag){
+		cout << "Loading Camera Matrices: ";
+		camMatVec = new vector<mat4>();
+		//glm::mat4 camMatrix;
+		loadCameraMatrices("cameraMatrix.txt", camMatVec);
+		cout << camMatVec->size() << " matrices"<<endl;
+		view = (*camMatVec)[0];
+		//view = glm::lookAt(vec3(0.0f, 0.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	}
+	else{
+		view = glm::lookAt(vec3(0.0f, 0.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+		//view = glm::mat4(1.0f);
+	}
 	cout << "Loading Mesh" << endl;
 
 	//ogre = new VBOMesh("../media/bs_ears.obj", true, false, false);
@@ -60,6 +69,16 @@ void SceneDiffuse::update(float t)
 
 }
 
+void SceneDiffuse::setCameraMat(int cameraMatIndex){
+	view = (*camMatVec)[cameraMatIndex];
+
+}
+
+void SceneDiffuse::setLoadCamMatFlag(bool flag)
+{
+	loadCamMatFlag = flag;
+}
+
 void SceneDiffuse::render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -72,8 +91,7 @@ void SceneDiffuse::setMatrices()
 {
 	mat4 mv = view * model;
 	prog.setUniform("ModelViewMatrix", mv);
-	prog.setUniform("NormalMatrix",
-		mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
+	prog.setUniform("NormalMatrix", mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
 	prog.setUniform("MVP", projection * mv);
 }
 
@@ -100,7 +118,7 @@ void SceneDiffuse::compileAndLinkShader()
 	}
 }
 
-void SceneDiffuse::loadCameraMatrices(const char * fileName, int matIndex, glm::mat4 &camMatrix){
+/*void SceneDiffuse::loadCameraMatrices(const char * fileName, int matIndex, glm::mat4 &camMatrix){
 	ifstream objStream(fileName, std::ios::in);
 
 	if (!objStream) {
@@ -134,6 +152,35 @@ void SceneDiffuse::loadCameraMatrices(const char * fileName, int matIndex, glm::
 	}
 
 	camMatrix = glm::make_mat4(camArray);
+}*/
+
+void SceneDiffuse::loadCameraMatrices(const char * fileName, vector<mat4>* camMatVector){
+	ifstream objStream(fileName, std::ios::in);
+
+	if (!objStream) {
+		cerr << "Unable to open matrice file: " << fileName << endl;
+		exit(1);
+	}
+
+	mat4 camMatrix;
+	string line;
+	//getline(objStream, line);
+	while (!objStream.eof()) {
+			getline(objStream, line);
+			float* camArray = new float[16];
+			if (line.length() > 0){
+				istringstream lineStream(line);
+				lineStream >> camArray[0] >> camArray[1] >> camArray[2] >> camArray[3] >> camArray[4] >> camArray[5] >> camArray[6] >> camArray[7] >> camArray[8]
+					>> camArray[9] >> camArray[10] >> camArray[11] >> camArray[12] >> camArray[13] >> camArray[14] >> camArray[15];
+			}
+
+			camMatrix = glm::make_mat4(camArray);
+			camMatVector->push_back(camMatrix);
+	}
+
+	objStream.close();
+
+	
 }
 
 void SceneDiffuse::trimString(string & str) {

@@ -18,10 +18,12 @@ using namespace std;
 
 Scene *scene;
 GLFWwindow *window;
+int cameraMatIndex;
 
 string parseCLArgs(int argc, char * argv);
 void printHelpInfo(const char *);
 void error_callback(int error, const char* description);
+bool loadCameraMatrices = false;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -32,12 +34,20 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 void initializeGL() {
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	((SceneDiffuse*)scene)->setLoadCamMatFlag(loadCameraMatrices);
 	scene->initScene();
 }
 
 void mainLoop() {
 	while (!glfwWindowShouldClose(window) && !glfwGetKey(window, GLFW_KEY_ESCAPE)) {
 		GLUtils::checkForOpenGLError(__FILE__, __LINE__);
+		if (loadCameraMatrices){
+			cout << "Please enter camera matrix index: ";
+			std::cin >> cameraMatIndex;
+			cout << endl;
+			((SceneDiffuse*)scene)->setCameraMat(cameraMatIndex);
+		}
+
 		scene->update(glfwGetTime());
 		scene->render();
 		glfwSwapBuffers(window);
@@ -76,6 +86,13 @@ int main(int argc, char *argv[])
 	}
 
 	GLUtils::dumpGLInfo();
+
+	char response;
+	cout << "Do you want to load camera matrices from file? (y/n): ";
+	cin >> response;
+	if (response == 'y'){
+		loadCameraMatrices = true;
+	}
 
 	// Initialization
 	cout << "Initializing OpenGL" << endl;
