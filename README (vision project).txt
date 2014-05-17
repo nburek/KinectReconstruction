@@ -1,6 +1,14 @@
 Pipeline 
 
-1. 3D Reconstruction: KinectFusionExplorer - D2D
+1. 3D Reconstruction: KinectFusionExplorer - D2D and NuiSensorChooser
+**********************************************************
+Requirements:
+Kinect SDK: http://www.microsoft.com/en-us/kinectforwindowsdev/Downloads.aspx
+**********************************************************
+Connect Kinect to computer
+Open KinectFusionExplorer-D2D solution and run from Visual Studio
+
+
 2. Kinect video subsampling: VideoMaker
 3. Matching: ImageMatching
 
@@ -9,13 +17,20 @@ Pipeline
 **********************************************************
 Requirements:
 GLM: http://glm.g-truc.net/0.9.5/index.html
-GLFW: http://www.glfw.org/download.html
+GLFW WIN32: http://www.glfw.org/download.html
 GLSL 3.3
 **********************************************************
 
 To load an object, please modify line 53 in scenediffuse.cpp
 To load a file contain camera matrices, please modify line 41 in scenediffuse.cpp
 To properly set up libraries:
+Modify the propery pages within the project to point to the appropriate directories
+	C/C++ --> General --> Additional Include Directories
+	1. Point to the base directory of glm
+	2. Point to the include directory of glfw
+
+	Linker--> General --> Additional Library Directories
+	1. Point to the lib folder of the respective version of Visual Studio you are using
 
 Once the libraries and file directories are properly set up the program should run without issue. If the program crashes for reasons other than improper library set up, please refer to the Troubleshooting notes below.
 When run, the program will output information regarding the current version of GLSL running on your graphics card.
