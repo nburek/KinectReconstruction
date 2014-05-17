@@ -10,7 +10,21 @@ Open KinectFusionExplorer-D2D solution and run from Visual Studio
 
 
 2. Kinect video subsampling: VideoMaker
+**********************************************************
+Requirements:
+Dirent
+OpenCV
+**********************************************************
+Set the directories to the frame images on lines 44-47.
+
 3. Matching: ImageMatching
+**********************************************************
+Requirements:
+Dirent
+OpenCV
+**********************************************************
+Set the path to the Key Frame image directory on line 151.
+Set the path to the hi-resolution image directory on line 153.
 
 
 4. Camera position verifying: OBJ Loader
